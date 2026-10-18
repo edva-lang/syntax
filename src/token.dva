@@ -52,7 +52,7 @@
          [TOKEN_COMMENT]  pal.muted
          [TOKEN_FUNCTION] pal.cyan
          [TOKEN_OPERATOR] pal.red
-         [TOKEN_PUNCT]    pal.border
+         [TOKEN_PUNCT]    pal.fg
          [TOKEN_SPECIAL]  pal.purple
          | pal.fg
 

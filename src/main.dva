@@ -7,6 +7,7 @@
 #use "color/palette"
 #use syntax
 #use "lang"
+#use "token"
 
 print_spans_ansi: (syntax::Span){} => ()
 print_spans_ansi = spans =>
@@ -15,7 +16,7 @@ print_spans_ansi = spans =>
       r = (c .>. 16) .&. 255
       g = (c .>. 8) .&. 255
       b = c .&. 255
-      bold = sp.attr == syntax::ATTR_BOLD | "\e[1m" | ""
+      bold = sp.attr == token::ATTR_BOLD | "\e[1m" | ""
       ansi_code = "\e[38;2;" + str::from_int(r) + ";" + str::from_int(g) + ";" + str::from_int(b) + "m" + bold
       io::out(ansi_code + sp.text + "\e[0m")
    io::out("\n")

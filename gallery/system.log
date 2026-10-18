@@ -1,0 +1,8 @@
+2026-10-18T13:00:01.120Z [INFO]  [server] Starting listener on 0.0.0.0:8080 (workers=4)
+2026-10-18T13:00:01.135Z [INFO]  [storage] Connected to PostgreSQL pool (max_conn=25, active=1)
+2026-10-18T13:00:02.401Z [DEBUG] [router] Route registered: GET /health (auth=none)
+2026-10-18T13:00:02.402Z [DEBUG] [router] Route registered: POST /api/v1/preview (auth=bearer)
+2026-10-18T13:00:15.892Z [INFO]  [http] 127.0.0.1 "GET /health HTTP/1.1" 200 45 0.8ms
+2026-10-18T13:01:22.014Z [WARN]  [cache] Cache miss for key 'gallery_meta_idx'
+2026-10-18T13:02:10.551Z [ERROR] [worker] Failed to fetch external telemetry: connection refused
+2026-10-18T13:03:00.000Z [INFO]  [cron] Scheduled maintenance cycle complete. Cleaned 0 expired tokens.

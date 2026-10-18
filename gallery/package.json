@@ -1,0 +1,28 @@
+{
+  "name": "@syntax/preview-core",
+  "version": "1.4.2",
+  "description": "Fast streaming text and syntax highlighter engine",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test",
+    "lint": "eslint src/"
+  },
+  "keywords": [
+    "syntax",
+    "highlighter",
+    "terminal",
+    "preview"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "picocolors": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  },
+  "private": false
+}

@@ -1,0 +1,14 @@
+Syntax Gallery Changelog
+========================
+
+Version 0.2.0 (2026-10-18)
+--------------------------
+* Added polyglot sample gallery with 30+ language suffixes.
+* Added support for Edva, Zig, Go, TypeScript, and Rust.
+* Improved multi-line block comment scanning across buffer boundaries.
+* Added truecolor terminal preview runner.
+
+Version 0.1.0 (2026-10-01)
+--------------------------
+* Initial bootstrap of tokenizer and language detection table.
+* Basic Catppuccin color scheme mappings.

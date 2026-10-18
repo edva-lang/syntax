@@ -1,0 +1,30 @@
+// Edva Example: Concurrent prime sieve and list operations
+#use io
+#use str
+
+#public
+   is_prime: Int => <>
+   is_prime = n =>
+      n < 2 | --| <->
+      n == 2 | --| <+>
+      n % 2 == 0 | --| <->
+      d' = 3
+      prime' = <+>
+      0.. @
+         d' * d' > n | -->
+         n % d' == 0 |
+            prime' = <->
+            -->
+         d' = d' + 2
+      prime'
+
+   primes_up_to: Int => (Int){}
+   primes_up_to = limit =>
+      res = (Int){}
+      2..limit @ x =>
+         is_prime(x) | res += x
+      res
+
+primes = primes_up_to(50)
+primes @ p =>
+   io::out("Prime: " + str::from_int(p) + "\n")

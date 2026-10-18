@@ -1,0 +1,20 @@
+# Compiled binaries and build artifacts
+bin/
+target/
+dist/
+*.o
+*.a
+*.so
+*.dylib
+
+# Editor and IDE metadata
+.vscode/
+.idea/
+*.swp
+*~
+
+# Dependencies and caches
+node_modules/
+__pycache__/
+*.py[cod]
+.env.local

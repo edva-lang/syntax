@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <!-- Code Library Index Registry -->
+  <package id="pkg-syntax-core" version="0.1.0">
+    <name>Syntax Core Highlighter</name>
+    <author>Edva Ware Team</author>
+    <platforms>
+      <platform os="linux" arch="x86_64" enabled="true" />
+      <platform os="darwin" arch="arm64" enabled="true" />
+    </platforms>
+    <keywords>
+      <tag>terminal</tag>
+      <tag>preview</tag>
+      <tag>lexer</tag>
+    </keywords>
+  </package>
+</catalog>

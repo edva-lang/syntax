@@ -1,0 +1,7 @@
+timestamp,endpoint,status_code,latency_ms,bytes_sent
+2026-10-18T12:00:01Z,/api/v1/health,200,1.24,64
+2026-10-18T12:00:02Z,/api/v1/users,200,14.85,2048
+2026-10-18T12:00:03Z,/api/v1/posts,200,8.32,5120
+2026-10-18T12:00:05Z,/api/v1/auth/login,401,2.10,128
+2026-10-18T12:00:08Z,/api/v1/reports,200,45.60,18432
+2026-10-18T12:00:10Z,/api/v1/search,200,19.40,4096

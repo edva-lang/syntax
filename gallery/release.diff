@@ -1,0 +1,15 @@
+diff --git a/src/lexer.rs b/src/lexer.rs
+index f1a2c3d..e4b5d6e 100644
+--- a/src/lexer.rs
++++ b/src/lexer.rs
+@@ -42,7 +42,9 @@ impl<'a> Lexer<'a> {
+         match self.peek() {
+             Some('/') => self.lex_comment(),
+             Some('"') => self.lex_string(),
+-            Some('0'..='9') => self.lex_number(),
++            Some('0'..='9') => {
++                self.lex_numeric_literal()
++            }
+             Some(c) if is_ident_start(c) => self.lex_identifier(),
+             _ => self.advance(),
+         }

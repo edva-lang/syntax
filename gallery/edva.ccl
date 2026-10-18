@@ -1,0 +1,16 @@
+name = gallery
+version = 0.1.0
+edva = 1.2.1+4d85c3a
+
+dependencies =
+   io = 1.0.0
+   str = 1.0.0
+   color = 0.3.2
+
+profiles =
+   debug =
+      opt = 0
+      debug_info = true
+   release =
+      opt = 3
+      debug_info = false

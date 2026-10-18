@@ -1,0 +1,25 @@
+# Application runtime configuration
+
+[server]
+host = "0.0.0.0"
+port = 8443
+timeout_seconds = 30
+max_connections = 1000
+
+[tls]
+enabled = true
+cert_path = "/etc/ssl/certs/server.crt"
+key_path = "/etc/ssl/private/server.key"
+
+[database]
+engine = "postgres"
+max_pool_size = 25
+retry_interval_ms = 500
+endpoints = [
+    "db1.internal:5432",
+    "db2.internal:5432",
+]
+
+[features]
+enable_metrics = true
+experimental_parser = false

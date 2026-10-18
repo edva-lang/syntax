@@ -1,0 +1,22 @@
+From 3a8b2c4e5f60718293a4b5c6d7e8f90123456789 Mon Sep 17 00:00:00 2001
+From: Antigravity <engineer@example.org>
+Date: Sun, 18 Oct 2026 12:30:00 +0300
+Subject: [PATCH] fix: prevent integer overflow when calculating row stride
+
+Ensure bounding checks occur before multiplying columns by item size.
+---
+ src/matrix.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/matrix.c b/src/matrix.c
+index 89abcde..0123456 100644
+--- a/src/matrix.c
++++ b/src/matrix.c
+@@ -105,7 +105,7 @@ size_t matrix_stride(size_t rows, size_t cols, size_t elem_size) {
+-    return rows * cols * elem_size;
++    size_t total_elements;
++    if (__builtin_mul_overflow(rows, cols, &total_elements)) return 0;
++    return total_elements * elem_size;
+ }
+-- 
+2.43.0

@@ -152,18 +152,19 @@
    // Check if an identifier is a keyword in the given language
    is_keyword: Int, String => <>
    is_keyword = lang, w =>
-      lang == LANG_EDVA                  | --| is_edva_kw(w)
-      lang == LANG_C                     | --| is_c_kw(w)
-      lang == LANG_CPP                   | --| is_cpp_kw(w)
-      lang == LANG_RUST                  | --| is_rust_kw(w)
-      lang == LANG_PYTHON                | --| is_python_kw(w)
-      lang == LANG_SHELL                 | --| is_shell_kw(w)
-      lang == LANG_GO                    | --| is_go_kw(w)
-      lang == LANG_ZIG                   | --| is_zig_kw(w)
-      lang == LANG_JS || lang == LANG_TS | --| is_js_ts_kw(w)
-      lang == LANG_ODIN                  | --| is_odin_kw(w)
-      lang == LANG_NUSHELL               | --| is_nu_kw(w)
-      <->
+      lang
+         [LANG_EDVA] is_edva_kw(w)
+         [LANG_C] is_c_kw(w)
+         [LANG_CPP] is_cpp_kw(w)
+         [LANG_RUST] is_rust_kw(w)
+         [LANG_PYTHON] is_python_kw(w)
+         [LANG_SHELL] is_shell_kw(w)
+         [LANG_GO] is_go_kw(w)
+         [LANG_ZIG] is_zig_kw(w)
+         [LANG_JS, LANG_TS] is_js_ts_kw(w)
+         [LANG_ODIN] is_odin_kw(w)
+         [LANG_NUSHELL] is_nu_kw(w)
+         | <->
 
    // --- Language-Specific Type Sets ---
    is_edva_type_name: String => <>
@@ -205,16 +206,17 @@
    // Check if an identifier is a standard type name
    is_type: Int, String => <>
    is_type = lang, w =>
-      lang == LANG_EDVA                   | --| is_edva_type_name(w)
-      lang == LANG_C || lang == LANG_CPP  | --| is_c_type_name(w)
-      lang == LANG_RUST                   | --| is_rust_type_name(w)
-      lang == LANG_PYTHON                 | --| is_python_type_name(w)
-      lang == LANG_GO                     | --| is_go_type_name(w)
-      lang == LANG_ZIG                    | --| is_zig_type_name(w)
-      lang == LANG_TS                     | --| is_ts_type_name(w)
-      lang == LANG_ODIN                   | --| is_odin_type_name(w)
-      lang == LANG_NUSHELL                | --| is_nu_type_name(w)
-      <->
+      lang
+         [LANG_EDVA] is_edva_type_name(w)
+         [LANG_C, LANG_CPP] is_c_type_name(w)
+         [LANG_RUST] is_rust_type_name(w)
+         [LANG_PYTHON] is_python_type_name(w)
+         [LANG_GO] is_go_type_name(w)
+         [LANG_ZIG] is_zig_type_name(w)
+         [LANG_TS] is_ts_type_name(w)
+         [LANG_ODIN] is_odin_type_name(w)
+         [LANG_NUSHELL] is_nu_type_name(w)
+         | <->
 
    // Check if an identifier is a standard constant (boolean, null, none)
    is_constant: Int, String => <>

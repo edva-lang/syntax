@@ -6,6 +6,7 @@
 #use str
 #use "color/palette"
 #use syntax
+#use "lang"
 
 print_spans_ansi: (syntax::Span){} => ()
 print_spans_ansi = spans =>
@@ -87,7 +88,7 @@ run_tests = !=>
    edva_lines += ""
    edva_lines += "   msg = \"Result: \" + str::from_int(fact(5, 1))"
 
-   res_edva = syntax::highlight_lines(syntax::LANG_EDVA, edva_lines, pal)
+   res_edva = syntax::highlight_lines(lang::LANG_EDVA, edva_lines, pal)
    res_edva @ hl =>
       print_spans_ansi(hl.spans)
    io::out("\n")
@@ -105,7 +106,7 @@ run_tests = !=>
    rust_lines += "    Some(sum)"
    rust_lines += "}"
 
-   res_rust = syntax::highlight_lines(syntax::LANG_RUST, rust_lines, pal)
+   res_rust = syntax::highlight_lines(lang::LANG_RUST, rust_lines, pal)
    res_rust @ hl =>
       print_spans_ansi(hl.spans)
    io::out("\n")
@@ -123,7 +124,7 @@ run_tests = !=>
    py_lines += "                matches.append(os.path.join(dirpath, name))"
    py_lines += "    return matches"
 
-   res_py = syntax::highlight_lines(syntax::LANG_PYTHON, py_lines, pal)
+   res_py = syntax::highlight_lines(lang::LANG_PYTHON, py_lines, pal)
    res_py @ hl =>
       print_spans_ansi(hl.spans)
    io::out("\n")
@@ -140,7 +141,7 @@ run_tests = !=>
    diff_lines += "+    term::force_redraw(t)"
    diff_lines += "     run!"
 
-   res_diff = syntax::highlight_lines(syntax::LANG_DIFF, diff_lines, pal)
+   res_diff = syntax::highlight_lines(lang::LANG_DIFF, diff_lines, pal)
    res_diff @ hl =>
       print_spans_ansi(hl.spans)
 

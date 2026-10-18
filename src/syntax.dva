@@ -35,28 +35,6 @@
    ATTR_BOLD = token::ATTR_BOLD
    ATTR_DIM  = token::ATTR_DIM
 
-   // --- Supported Languages ---
-   LANG_PLAIN       = lang::LANG_PLAIN
-   LANG_EDVA        = lang::LANG_EDVA
-   LANG_C           = lang::LANG_C
-   LANG_CPP         = lang::LANG_CPP
-   LANG_RUST        = lang::LANG_RUST
-   LANG_PYTHON      = lang::LANG_PYTHON
-   LANG_SHELL       = lang::LANG_SHELL
-   LANG_JSON        = lang::LANG_JSON
-   LANG_TOML        = lang::LANG_TOML
-   LANG_MARKDOWN    = lang::LANG_MARKDOWN
-   LANG_HTML        = lang::LANG_HTML
-   LANG_DIFF        = lang::LANG_DIFF
-   LANG_GO          = lang::LANG_GO
-   LANG_ZIG         = lang::LANG_ZIG
-   LANG_JS          = lang::LANG_JS
-   LANG_TS          = lang::LANG_TS
-   LANG_CCL         = lang::LANG_CCL
-   LANG_MAKEFILE    = lang::LANG_MAKEFILE
-   LANG_ODIN        = lang::LANG_ODIN
-   LANG_NUSHELL     = lang::LANG_NUSHELL
-
    // Detect language ID from file path or filename
    detect_language: String => Int
    detect_language = path => lang::detect_language(path)

@@ -1,6 +1,8 @@
-// syntax/src/main.dva — Demo and test runner for syntax package
+// syntax/src/main.dva — CLI syntax viewer and test runner for syntax package
 
 #use io
+#use sys
+#use libc
 #use str
 #use "color/palette"
 #use syntax
@@ -16,6 +18,37 @@ print_spans_ansi = spans =>
       ansi_code = "\e[38;2;" + str::from_int(r) + ";" + str::from_int(g) + ";" + str::from_int(b) + "m" + bold
       io::out(ansi_code + sp.text + "\e[0m")
    io::out("\n")
+
+print_file: String => ()
+print_file = path =>
+   pal = palette::CATPPUCCIN
+   fd = libc::open(path, 0)
+   fd < 0 |
+      io::out("Error: could not open file: " + path + "\n")
+      --|
+   buf = {65536}
+   n = libc::read(fd, &buf, 65536)
+   libc::close(fd)
+   n !> 0 | --|
+   lines = (String){}
+   cur = {256}
+   n @ i =>
+      c = @[&buf + i u8]
+      c == 10u8
+         |
+            lines += +cur
+            cur = {256}
+         |
+            c != 13u8 | cur += Rune(c)
+   ?cur > 0 | lines += +cur
+
+   lang_id = syntax::detect_language(path)
+   res = syntax::highlight_lines(lang_id, lines, pal)
+   res @ hl, idx =>
+      line_num = str::from_int(idx + 1)
+      pad = ?line_num < 3 | "  " | (?line_num < 4 | " " | "")
+      io::out("\e[38;2;108;112;134m" + pad + line_num + " │ \e[0m")
+      print_spans_ansi(hl.spans)
 
 run_tests: () => ()
 run_tests = !=>
@@ -111,4 +144,6 @@ run_tests = !=>
    res_diff @ hl =>
       print_spans_ansi(hl.spans)
 
-run_tests!
+sys::argc > 1
+   | print_file(sys::argv_string(1))
+   | run_tests!

@@ -1,0 +1,24 @@
+//- Master layout template for documentation site
+doctype html
+html(lang="en")
+  head
+    meta(charset="utf-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title #{pageTitle} | Syntax Gallery
+    link(rel="stylesheet", href="/styles/main.css")
+  body
+    header.site-header
+      h1= siteName
+      nav.navigation
+        ul
+          each link in navLinks
+            li: a(href=link.url, class=link.active ? 'active' : '')= link.label
+
+    main#content.container
+      block content
+        article.preview-panel
+          h2 Default Preview
+          p No content provided for this template slot.
+
+    footer.site-footer
+      p &copy; 2026 Syntax Ware. Built with Pug &amp; Stylus.

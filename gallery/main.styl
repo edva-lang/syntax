@@ -1,0 +1,53 @@
+// Stylus preview stylesheet with mixins, functions, and nested selectors
+
+$primary-color = #89b4fa
+$accent-color  = #f38ba8
+$surface0      = #313244
+$font-stack    = 'JetBrains Mono', 'Fira Code', monospace
+
+border-radius(val)
+  -webkit-border-radius: val
+  -moz-border-radius: val
+  border-radius: val
+
+box-shadow-elevation(level = 1)
+  if level == 1
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15)
+  else if level == 2
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25)
+  else
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35)
+
+body
+  font: 14px/1.6 $font-stack
+  background-color: $surface0
+  color: #cdd6f4
+  margin: 0
+  padding: 0
+
+.preview-card
+  background: lighten($surface0, 6%)
+  border-radius(8px)
+  box-shadow-elevation(2)
+  padding: 1.5rem
+  transition: transform 0.2s ease, box-shadow 0.2s ease
+
+  h2
+    color: $primary-color
+    margin-top: 0
+    font-size: 1.25rem
+
+  p
+    color: #a6adc8
+
+  &:hover
+    transform: translateY(-3px)
+    box-shadow-elevation(3)
+
+  .badge
+    background-color: $accent-color
+    color: #11111b
+    border-radius(4px)
+    padding: 0.2rem 0.5rem
+    font-size: 0.75rem
+    font-weight: bold

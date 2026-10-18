@@ -19,6 +19,8 @@
    LANG_TS          = 15
    LANG_CCL         = 16
    LANG_MAKEFILE    = 17
+   LANG_ODIN        = 18
+   LANG_NUSHELL     = 19
 
    // Extract filename / basename from path
    basename: String => String
@@ -81,24 +83,26 @@
          ["zig"]                                  LANG_ZIG
          ["js", "mjs", "cjs", "jsx"]              LANG_JS
          ["ts", "mts", "cts", "tsx"]              LANG_TS
+         ["odin"]                                 LANG_ODIN
+         ["nu"]                                   LANG_NUSHELL
          | LANG_PLAIN
 
    // Check if language supports // line comments
    has_slash_slash_comment: Int => <>
    has_slash_slash_comment = lang =>
       lang == LANG_EDVA || lang == LANG_C || lang == LANG_CPP || lang == LANG_RUST ||
-      lang == LANG_GO || lang == LANG_ZIG || lang == LANG_JS || lang == LANG_TS
+      lang == LANG_GO || lang == LANG_ZIG || lang == LANG_JS || lang == LANG_TS || lang == LANG_ODIN
 
    // Check if language supports /* ... */ block comments
    has_slash_star_comment: Int => <>
    has_slash_star_comment = lang =>
       lang == LANG_EDVA || lang == LANG_C || lang == LANG_CPP || lang == LANG_RUST ||
-      lang == LANG_GO || lang == LANG_ZIG || lang == LANG_JS || lang == LANG_TS || lang == LANG_JSON
+      lang == LANG_GO || lang == LANG_ZIG || lang == LANG_JS || lang == LANG_TS || lang == LANG_JSON || lang == LANG_ODIN
 
    // Check if language supports # line comments
    has_hash_comment: Int => <>
    has_hash_comment = lang =>
-      lang == LANG_PYTHON || lang == LANG_SHELL || lang == LANG_TOML || lang == LANG_CCL || lang == LANG_MAKEFILE
+      lang == LANG_PYTHON || lang == LANG_SHELL || lang == LANG_TOML || lang == LANG_CCL || lang == LANG_MAKEFILE || lang == LANG_NUSHELL
 
    // --- Language-Specific Keyword Sets ---
    is_edva_kw: String => <>
@@ -137,6 +141,14 @@
    is_js_ts_kw = w =>
       w ["function", "const", "let", "var", "return", "if", "else", "for", "while", "do", "switch", "case", "default", "break", "continue", "class", "interface", "type", "extends", "implements", "import", "export", "from", "as", "new", "this", "super", "async", "await", "yield", "try", "catch", "finally", "throw", "typeof", "instanceof", "in", "of", "debugger"]
 
+   is_odin_kw: String => <>
+   is_odin_kw = w =>
+      w ["package", "import", "proc", "struct", "enum", "union", "return", "if", "else", "when", "for", "in", "switch", "case", "defer", "fallthrough", "break", "continue", "using", "inline", "distinct", "dynamic", "map", "bit_set"]
+
+   is_nu_kw: String => <>
+   is_nu_kw = w =>
+      w ["def", "let", "mut", "const", "if", "else", "for", "in", "while", "loop", "match", "return", "export", "use", "module", "overlay", "source", "where", "parse", "lines", "open", "print", "error"]
+
    // Check if an identifier is a keyword in the given language
    is_keyword: Int, String => <>
    is_keyword = lang, w =>
@@ -149,6 +161,8 @@
       lang == LANG_GO                    | --| is_go_kw(w)
       lang == LANG_ZIG                   | --| is_zig_kw(w)
       lang == LANG_JS || lang == LANG_TS | --| is_js_ts_kw(w)
+      lang == LANG_ODIN                  | --| is_odin_kw(w)
+      lang == LANG_NUSHELL               | --| is_nu_kw(w)
       <->
 
    // --- Language-Specific Type Sets ---
@@ -180,6 +194,14 @@
    is_ts_type_name = w =>
       w ["string", "number", "boolean", "any", "void", "never", "unknown", "object", "symbol", "bigint", "Array", "Record", "Promise"]
 
+   is_odin_type_name: String => <>
+   is_odin_type_name = w =>
+      w ["int", "uint", "string", "cstring", "rawptr", "bool", "b8", "b32", "i8", "i16", "i32", "i64", "u8", "u16", "u32", "u64", "f32", "f64"]
+
+   is_nu_type_name: String => <>
+   is_nu_type_name = w =>
+      w ["string", "int", "float", "bool", "path", "duration", "date", "filesize", "record", "table", "list", "binary"]
+
    // Check if an identifier is a standard type name
    is_type: Int, String => <>
    is_type = lang, w =>
@@ -190,6 +212,8 @@
       lang == LANG_GO                     | --| is_go_type_name(w)
       lang == LANG_ZIG                    | --| is_zig_type_name(w)
       lang == LANG_TS                     | --| is_ts_type_name(w)
+      lang == LANG_ODIN                   | --| is_odin_type_name(w)
+      lang == LANG_NUSHELL                | --| is_nu_type_name(w)
       <->
 
    // Check if an identifier is a standard constant (boolean, null, none)

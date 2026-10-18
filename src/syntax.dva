@@ -54,6 +54,8 @@
    LANG_TS          = lang::LANG_TS
    LANG_CCL         = lang::LANG_CCL
    LANG_MAKEFILE    = lang::LANG_MAKEFILE
+   LANG_ODIN        = lang::LANG_ODIN
+   LANG_NUSHELL     = lang::LANG_NUSHELL
 
    // Detect language ID from file path or filename
    detect_language: String => Int

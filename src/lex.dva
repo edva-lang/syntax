@@ -9,11 +9,11 @@
 
    is_operator_char: Int => <>
    is_operator_char = c =>
-      c [124, '=', '+', '-', '*', '/', '%', '&', '^', '!', '<', '>', ':', '~', '?', '@']
+      c ['|', '=', '+', '-', '*', '/', '%', '&', '^', '!', '<', '>', ':', '~', '?', '@']
 
    is_delimiter_char: Int => <>
    is_delimiter_char = c =>
-      c [91, 93, '(', ')', '{', '}', ';', ',']
+      c ['[', ']', '(', ')', '{', '}', ';', ',']
 
    // Search for substring in line starting at from_idx
    find_sub: String, String, Int => Int

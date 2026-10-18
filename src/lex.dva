@@ -1,0 +1,330 @@
+// syntax/src/lex.dva — Fast streaming line tokenizer
+
+#use ascii
+#use "color/palette"
+#use "token"
+#use "lang"
+
+#public
+
+   is_operator_char: Int => <>
+   is_operator_char = c =>
+      c == 124 | --| <+>
+      c ['=', '+', '-', '*', '/', '%', '&', '^', '!', '<', '>', ':', '~', '?', '@']
+
+   is_delimiter_char: Int => <>
+   is_delimiter_char = c =>
+      c == 91 || c == 93 | --| <+>
+      c ['(', ')', '{', '}', ';', ',']
+
+   // Search for substring in line starting at from_idx
+   find_sub: String, String, Int => Int
+   find_sub = str_val, pat, from_idx =>
+      n = ?str_val
+      p_len = ?pat
+      p_len == 0 | --| from_idx
+      from_idx + p_len > n | --| -1
+      limit = n - p_len + 1
+      found' = -1
+      from_idx..limit @ i =>
+         match' = <+>
+         p_len @ j =>
+            str_val(i + j) != pat(j) |
+               match' = <->
+               -->
+         match' |
+            found' = i
+            -->
+      found'
+
+   // Highlight unified diff output
+   highlight_diff: String, palette::Palette => token::HighlightedLine
+   highlight_diff = line_str, pal =>
+      spans = (token::Span){}
+      line_len = ?line_str
+      line_len == 0 | --| token::HighlightedLine((spans, token::STATE_NORMAL))
+      c0 = line_str(0)
+      c0 == '+' && (line_len < 3 || line_str(0..3) != "+++") |
+         spans += token::make_span(line_str, token::TOKEN_STRING, pal)
+         --| token::HighlightedLine((spans, token::STATE_NORMAL))
+      c0 == '-' && (line_len < 3 || line_str(0..3) != "---") |
+         spans += token::make_span(line_str, token::TOKEN_OPERATOR, pal)
+         --| token::HighlightedLine((spans, token::STATE_NORMAL))
+      c0 == '@' && (line_len > 1 && line_str(1) == '@') |
+         spans += token::make_span(line_str, token::TOKEN_FUNCTION, pal)
+         --| token::HighlightedLine((spans, token::STATE_NORMAL))
+      line_len !< 4 && (line_str(0..4) == "diff" || line_str(0..4) == "--- " || line_str(0..4) == "+++ ") |
+         spans += token::make_span(line_str, token::TOKEN_SPECIAL, pal)
+         --| token::HighlightedLine((spans, token::STATE_NORMAL))
+      spans += token::make_span(line_str, token::TOKEN_TEXT, pal)
+      token::HighlightedLine((spans, token::STATE_NORMAL))
+
+   // Highlight markdown line
+   highlight_markdown: String, Int, palette::Palette => token::HighlightedLine
+   highlight_markdown = line_str, state_in, pal =>
+      spans = (token::Span){}
+      line_len = ?line_str
+      line_len == 0 | --| token::HighlightedLine((spans, state_in))
+
+      // Inside fenced code block
+      state_in == token::STATE_CODE_BLOCK |
+         line_len !< 3 && line_str(0..3) == "```" |
+            spans += token::make_span(line_str, token::TOKEN_FUNCTION, pal)
+            --| token::HighlightedLine((spans, token::STATE_NORMAL))
+         spans += token::make_span(line_str, token::TOKEN_TEXT, pal)
+         --| token::HighlightedLine((spans, token::STATE_CODE_BLOCK))
+
+      // Fenced code block opening
+      line_len !< 3 && line_str(0..3) == "```" |
+         spans += token::make_span(line_str, token::TOKEN_FUNCTION, pal)
+         --| token::HighlightedLine((spans, token::STATE_CODE_BLOCK))
+
+      // Headings: # Heading
+      line_str(0) == '#' |
+         spans += token::make_span(line_str, token::TOKEN_TYPE, pal)
+         --| token::HighlightedLine((spans, token::STATE_NORMAL))
+
+      // Blockquotes: > Quote
+      line_str(0) == '>' |
+         spans += token::make_span(">", token::TOKEN_KEYWORD, pal)
+         line_len > 1 |
+            spans += token::make_span(line_str(1..), token::TOKEN_COMMENT, pal)
+            --| token::HighlightedLine((spans, token::STATE_NORMAL))
+         --| token::HighlightedLine((spans, token::STATE_NORMAL))
+
+      // Bullet lists: - item or * item
+      line_len > 1 && (line_str(0..2) == "- " || line_str(0..2) == "* ") |
+         spans += token::make_span(line_str(0..2), token::TOKEN_KEYWORD, pal)
+         line_len > 2 |
+            spans += token::make_span(line_str(2..), token::TOKEN_TEXT, pal)
+            --| token::HighlightedLine((spans, token::STATE_NORMAL))
+         --| token::HighlightedLine((spans, token::STATE_NORMAL))
+
+      // Regular line
+      spans += token::make_span(line_str, token::TOKEN_TEXT, pal)
+      token::HighlightedLine((spans, token::STATE_NORMAL))
+
+   // Highlight a single line of text with inter-line state tracking
+   highlight_line: Int, String, Int, palette::Palette => token::HighlightedLine
+   highlight_line = lang_id, line_str, state_in, pal =>
+      spans = (token::Span){}
+      line_len = ?line_str
+      line_len == 0 | --| token::HighlightedLine((spans, state_in))
+
+      // Dispatch to specialized highlighters
+      lang_id == lang::LANG_DIFF     | --| highlight_diff(line_str, pal)
+      lang_id == lang::LANG_MARKDOWN | --| highlight_markdown(line_str, state_in, pal)
+
+      // --- Multi-line Carry-over States ---
+      idx' = 0
+      cur_state' = state_in
+
+      // Block comment continuation
+      cur_state' == token::STATE_BLOCK_COMMENT |
+         close_pos = find_sub(line_str, "*/", 0)
+         close_pos !< 0
+            |
+               end_idx = close_pos + 2
+               spans += token::make_span(line_str(0..end_idx), token::TOKEN_COMMENT, pal)
+               idx' = end_idx
+               cur_state' = token::STATE_NORMAL
+            |
+               spans += token::make_span(line_str, token::TOKEN_COMMENT, pal)
+               --| token::HighlightedLine((spans, token::STATE_BLOCK_COMMENT))
+
+      // Python triple-double quotes continuation
+      cur_state' == token::STATE_TRIPLE_DOUBLE |
+         close_pos = find_sub(line_str, "\"\"\"", 0)
+         close_pos !< 0
+            |
+               end_idx = close_pos + 3
+               spans += token::make_span(line_str(0..end_idx), token::TOKEN_STRING, pal)
+               idx' = end_idx
+               cur_state' = token::STATE_NORMAL
+            |
+               spans += token::make_span(line_str, token::TOKEN_STRING, pal)
+               --| token::HighlightedLine((spans, token::STATE_TRIPLE_DOUBLE))
+
+      // Python triple-single quotes continuation
+      cur_state' == token::STATE_TRIPLE_SINGLE |
+         close_pos = find_sub(line_str, "'''", 0)
+         close_pos !< 0
+            |
+               end_idx = close_pos + 3
+               spans += token::make_span(line_str(0..end_idx), token::TOKEN_STRING, pal)
+               idx' = end_idx
+               cur_state' = token::STATE_NORMAL
+            |
+               spans += token::make_span(line_str, token::TOKEN_STRING, pal)
+               --| token::HighlightedLine((spans, token::STATE_TRIPLE_SINGLE))
+
+      // --- Main Token Scanning Loop ---
+      0.. @
+         idx' !< line_len | -->
+         c = line_str(idx')
+
+         // A. Whitespace Run
+         c == ' ' || c == '\t' || c == '\r' |
+            ws_start = idx'
+            0.. @
+               idx' = idx' + 1
+               idx' !< line_len | -->
+               ch = line_str(idx')
+               !(ch == ' ' || ch == '\t' || ch == '\r') | -->
+            spans += token::make_span(line_str(ws_start..idx'), token::TOKEN_TEXT, pal)
+            --^
+
+         // B. // Comments
+         lang::has_slash_slash_comment(lang_id) && c == '/' && (idx' + 1 < line_len) && line_str(idx' + 1) == '/' |
+            spans += token::make_span(line_str(idx'..), token::TOKEN_COMMENT, pal)
+            idx' = line_len
+            -->
+
+         // C. /* */ Block Comments
+         lang::has_slash_star_comment(lang_id) && c == '/' && (idx' + 1 < line_len) && line_str(idx' + 1) == '*' |
+            close_pos = find_sub(line_str, "*/", idx' + 2)
+            close_pos !< 0
+               |
+                  end_idx = close_pos + 2
+                  spans += token::make_span(line_str(idx'..end_idx), token::TOKEN_COMMENT, pal)
+                  idx' = end_idx
+               |
+                  spans += token::make_span(line_str(idx'..), token::TOKEN_COMMENT, pal)
+                  idx' = line_len
+                  cur_state' = token::STATE_BLOCK_COMMENT
+            --^
+
+         // D. Hash Comments or Directives (#)
+         c == '#' |
+            lang_id == lang::LANG_EDVA || lang_id == lang::LANG_C || lang_id == lang::LANG_CPP
+               |
+                  // Directive in Edva / C / C++
+                  dir_start = idx'
+                  0.. @
+                     idx' = idx' + 1
+                     idx' !< line_len | -->
+                     ch = line_str(idx')
+                     !ascii::is_alnum(ch) && ch != '_' | -->
+                  spans += token::make_span(line_str(dir_start..idx'), token::TOKEN_SPECIAL, pal)
+               |
+                  lang::has_hash_comment(lang_id)
+                     |
+                        spans += token::make_span(line_str(idx'..), token::TOKEN_COMMENT, pal)
+                        idx' = line_len
+                     |
+                        spans += token::make_span("#", token::TOKEN_OPERATOR, pal)
+                        idx' = idx' + 1
+            --^
+
+         // E. Triple quotes in Python
+         lang_id == lang::LANG_PYTHON && idx' + 2 < line_len && (line_str(idx'..idx' + 3) == "\"\"\"") |
+            close_pos = find_sub(line_str, "\"\"\"", idx' + 3)
+            close_pos !< 0
+               |
+                  end_idx = close_pos + 3
+                  spans += token::make_span(line_str(idx'..end_idx), token::TOKEN_STRING, pal)
+                  idx' = end_idx
+               |
+                  spans += token::make_span(line_str(idx'..), token::TOKEN_STRING, pal)
+                  idx' = line_len
+                  cur_state' = token::STATE_TRIPLE_DOUBLE
+            --^
+         lang_id == lang::LANG_PYTHON && idx' + 2 < line_len && (line_str(idx'..idx' + 3) == "'''") |
+            close_pos = find_sub(line_str, "'''", idx' + 3)
+            close_pos !< 0
+               |
+                  end_idx = close_pos + 3
+                  spans += token::make_span(line_str(idx'..end_idx), token::TOKEN_STRING, pal)
+                  idx' = end_idx
+               |
+                  spans += token::make_span(line_str(idx'..), token::TOKEN_STRING, pal)
+                  idx' = line_len
+                  cur_state' = token::STATE_TRIPLE_SINGLE
+            --^
+
+         // F. Standard Quoted Strings: ", ', `
+         c == '"' || c == '\'' || c == '`' |
+            q_char = c
+            str_start = idx'
+            idx' = idx' + 1
+            esc' = <->
+            0.. @
+               idx' !< line_len | -->
+               ch = line_str(idx')
+               esc'
+                  | esc' = <->
+                  | ch == '\\'
+                     | esc' = <+>
+                     | ch == q_char
+                        |
+                           idx' = idx' + 1
+                           -->
+               idx' = idx' + 1
+            spans += token::make_span(line_str(str_start..idx'), token::TOKEN_STRING, pal)
+            --^
+
+         // G. Numbers
+         ascii::is_digit(c) || (c == '.' && idx' + 1 < line_len && ascii::is_digit(line_str(idx' + 1))) |
+            num_start = idx'
+            0.. @
+               idx' = idx' + 1
+               idx' !< line_len | -->
+               ch = line_str(idx')
+               !ascii::is_alnum(ch) && ch != '.' && ch != '_' | -->
+            spans += token::make_span(line_str(num_start..idx'), token::TOKEN_NUMBER, pal)
+            --^
+
+         // H. Identifiers, Keywords, Types, and Function Calls
+         ascii::is_alpha(c) || c == '_' || (c == '$' && lang_id == lang::LANG_EDVA) |
+            id_start = idx'
+            0.. @
+               idx' = idx' + 1
+               idx' !< line_len | -->
+               ch = line_str(idx')
+               !ascii::is_alnum(ch) && ch != '_' | -->
+            word = line_str(id_start..idx')
+
+            lang::is_keyword(lang_id, word)
+               | spans += token::make_span(word, token::TOKEN_KEYWORD, pal)
+               | lang::is_type(lang_id, word)
+                  | spans += token::make_span(word, token::TOKEN_TYPE, pal)
+                  | lang::is_constant(lang_id, word)
+                     | spans += token::make_span(word, token::TOKEN_NUMBER, pal)
+                     |
+                        // Check if function call (followed by '(')
+                        peek_idx' = idx'
+                        0.. @
+                           peek_idx' !< line_len | -->
+                           pch = line_str(peek_idx')
+                           pch == ' ' || pch == '\t' |
+                              peek_idx' = peek_idx' + 1
+                              --^
+                           -->
+                        is_fn = peek_idx' < line_len && line_str(peek_idx') == '('
+                        is_fn
+                           | spans += token::make_span(word, token::TOKEN_FUNCTION, pal)
+                           | spans += token::make_span(word, token::TOKEN_TEXT, pal)
+            --^
+
+         // I. Delimiters and Punctuation
+         is_delimiter_char(c) |
+            spans += token::make_span(line_str(idx'..idx' + 1), token::TOKEN_PUNCT, pal)
+            idx' = idx' + 1
+            --^
+
+         // J. Operators and Symbols
+         is_operator_char(c) |
+            op_start = idx'
+            0.. @
+               idx' = idx' + 1
+               idx' !< line_len | -->
+               ch = line_str(idx')
+               !is_operator_char(ch) | -->
+            spans += token::make_span(line_str(op_start..idx'), token::TOKEN_OPERATOR, pal)
+            --^
+
+         // K. Fallback: single character text
+         spans += token::make_span(line_str(idx'..idx' + 1), token::TOKEN_TEXT, pal)
+         idx' = idx' + 1
+
+      token::HighlightedLine((spans, cur_state'))

@@ -1,4 +1,80 @@
-#public
+// syntax/src/syntax.dva — Public library API for syntax highlighting
 
-hello: () => String
-hello = !=> "Hello from syntax!"
+#use "color/palette"
+#use "token"
+#use "lang"
+#use "lex"
+
+#public
+   // --- Core Types ---
+   #type Span token::Span
+   #type HighlightedLine token::HighlightedLine
+   #type Palette palette::Palette
+
+   // --- Token Kinds ---
+   TOKEN_TEXT      = token::TOKEN_TEXT
+   TOKEN_KEYWORD   = token::TOKEN_KEYWORD
+   TOKEN_TYPE      = token::TOKEN_TYPE
+   TOKEN_STRING    = token::TOKEN_STRING
+   TOKEN_NUMBER    = token::TOKEN_NUMBER
+   TOKEN_COMMENT   = token::TOKEN_COMMENT
+   TOKEN_FUNCTION  = token::TOKEN_FUNCTION
+   TOKEN_OPERATOR  = token::TOKEN_OPERATOR
+   TOKEN_PUNCT     = token::TOKEN_PUNCT
+   TOKEN_SPECIAL   = token::TOKEN_SPECIAL
+
+   // --- Inter-line Lexer States ---
+   STATE_NORMAL         = token::STATE_NORMAL
+   STATE_BLOCK_COMMENT  = token::STATE_BLOCK_COMMENT
+   STATE_TRIPLE_DOUBLE  = token::STATE_TRIPLE_DOUBLE
+   STATE_TRIPLE_SINGLE  = token::STATE_TRIPLE_SINGLE
+   STATE_CODE_BLOCK     = token::STATE_CODE_BLOCK
+
+   // --- Text Attributes ---
+   ATTR_NONE = token::ATTR_NONE
+   ATTR_BOLD = token::ATTR_BOLD
+   ATTR_DIM  = token::ATTR_DIM
+
+   // --- Supported Languages ---
+   LANG_PLAIN       = lang::LANG_PLAIN
+   LANG_EDVA        = lang::LANG_EDVA
+   LANG_C           = lang::LANG_C
+   LANG_CPP         = lang::LANG_CPP
+   LANG_RUST        = lang::LANG_RUST
+   LANG_PYTHON      = lang::LANG_PYTHON
+   LANG_SHELL       = lang::LANG_SHELL
+   LANG_JSON        = lang::LANG_JSON
+   LANG_TOML        = lang::LANG_TOML
+   LANG_MARKDOWN    = lang::LANG_MARKDOWN
+   LANG_HTML        = lang::LANG_HTML
+   LANG_DIFF        = lang::LANG_DIFF
+   LANG_GO          = lang::LANG_GO
+   LANG_ZIG         = lang::LANG_ZIG
+   LANG_JS          = lang::LANG_JS
+   LANG_TS          = lang::LANG_TS
+   LANG_CCL         = lang::LANG_CCL
+   LANG_MAKEFILE    = lang::LANG_MAKEFILE
+
+   // Detect language ID from file path or filename
+   detect_language: String => Int
+   detect_language = path => lang::detect_language(path)
+
+   // Resolve a token kind to its color in a given palette
+   token_color: Int, palette::Palette => Int
+   token_color = kind, pal => token::token_color(kind, pal)
+
+   // Highlight a single line with state tracking
+   highlight_line: Int, String, Int, palette::Palette => token::HighlightedLine
+   highlight_line = lang_id, line_str, state_in, pal =>
+      lex::highlight_line(lang_id, line_str, state_in, pal)
+
+   // Highlight a list of lines in sequence, carrying state across lines
+   highlight_lines: Int, (String){}, palette::Palette => (token::HighlightedLine){}
+   highlight_lines = lang_id, lines, pal =>
+      out = (token::HighlightedLine){}
+      st' = token::STATE_NORMAL
+      lines @ line =>
+         res = lex::highlight_line(lang_id, line, st', pal)
+         st' = res.state_out
+         out += res
+      out

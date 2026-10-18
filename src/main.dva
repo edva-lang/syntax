@@ -1,3 +1,114 @@
-#use io
+// syntax/src/main.dva — Demo and test runner for syntax package
 
-io::out $ "Hello from syntax!"
+#use io
+#use str
+#use "color/palette"
+#use syntax
+
+print_spans_ansi: (syntax::Span){} => ()
+print_spans_ansi = spans =>
+   spans @ sp =>
+      c = sp.fg
+      r = (c .>. 16) .&. 255
+      g = (c .>. 8) .&. 255
+      b = c .&. 255
+      bold = sp.attr == syntax::ATTR_BOLD | "\e[1m" | ""
+      ansi_code = "\e[38;2;" + str::from_int(r) + ";" + str::from_int(g) + ";" + str::from_int(b) + "m" + bold
+      io::out(ansi_code + sp.text + "\e[0m")
+   io::out("\n")
+
+run_tests: () => ()
+run_tests = !=>
+   pal = palette::CATPPUCCIN
+   io::out("\e[1m=== Testing Syntax Highlighter (Catppuccin Mocha) ===\e[0m\n\n")
+
+   // 1. Language Detection Tests
+   io::out("--- Language Detection ---\n")
+   paths = (String){}
+   paths += "test.dva"
+   paths += "main.c"
+   paths += "engine.rs"
+   paths += "script.py"
+   paths += "deploy.sh"
+   paths += "config.toml"
+   paths += "package.ccl"
+   paths += "README.md"
+   paths += "patch.diff"
+
+   paths @ p =>
+      lid = syntax::detect_language(p)
+      io::out("File: " + p + " -> Lang ID: " + str::from_int(lid) + "\n")
+   io::out("\n")
+
+   // 2. Edva Highlighting Test
+   io::out("--- Edva Code Sample ---\n")
+   edva_lines = (String){}
+   edva_lines += "// Calculate factorial with accumulator"
+   edva_lines += "#use io"
+   edva_lines += "#use str"
+   edva_lines += ""
+   edva_lines += "#public"
+   edva_lines += "   fact: Int, Int => Int"
+   edva_lines += "   fact = n, acc =>"
+   edva_lines += "      n <= 1 | acc | fact(n - 1, acc * n)"
+   edva_lines += ""
+   edva_lines += "   msg = \"Result: \" + str::from_int(fact(5, 1))"
+
+   res_edva = syntax::highlight_lines(syntax::LANG_EDVA, edva_lines, pal)
+   res_edva @ hl =>
+      print_spans_ansi(hl.spans)
+   io::out("\n")
+
+   // 3. Rust Code Sample with Block Comments
+   io::out("--- Rust Code Sample ---\n")
+   rust_lines = (String){}
+   rust_lines += "/* Multi-line header comment"
+   rust_lines += "   explaining algorithm */"
+   rust_lines += "pub fn compute(items: &Vec<u64>) -> Option<u64> {"
+   rust_lines += "    let mut sum: u64 = 0;"
+   rust_lines += "    for &item in items.iter() {"
+   rust_lines += "        sum += item;"
+   rust_lines += "    }"
+   rust_lines += "    Some(sum)"
+   rust_lines += "}"
+
+   res_rust = syntax::highlight_lines(syntax::LANG_RUST, rust_lines, pal)
+   res_rust @ hl =>
+      print_spans_ansi(hl.spans)
+   io::out("\n")
+
+   // 4. Python Code Sample
+   io::out("--- Python Code Sample ---\n")
+   py_lines = (String){}
+   py_lines += "import os, sys"
+   py_lines += ""
+   py_lines += "def find_files(root: str, pattern: str) -> list[str]:"
+   py_lines += "    matches = []"
+   py_lines += "    for dirpath, _, filenames in os.walk(root):"
+   py_lines += "        for name in filenames:"
+   py_lines += "            if name.endswith(pattern):"
+   py_lines += "                matches.append(os.path.join(dirpath, name))"
+   py_lines += "    return matches"
+
+   res_py = syntax::highlight_lines(syntax::LANG_PYTHON, py_lines, pal)
+   res_py @ hl =>
+      print_spans_ansi(hl.spans)
+   io::out("\n")
+
+   // 5. Diff Sample
+   io::out("--- Git Diff Sample ---\n")
+   diff_lines = (String){}
+   diff_lines += "diff --git a/src/main.dva b/src/main.dva"
+   diff_lines += "index 1234567..89abcdef 100644"
+   diff_lines += "--- a/src/main.dva"
+   diff_lines += "+++ b/src/main.dva"
+   diff_lines += "@@ -10,4 +10,4 @@"
+   diff_lines += "-    term::disable_raw(t)"
+   diff_lines += "+    term::force_redraw(t)"
+   diff_lines += "     run!"
+
+   res_diff = syntax::highlight_lines(syntax::LANG_DIFF, diff_lines, pal)
+   res_diff @ hl =>
+      print_spans_ansi(hl.spans)
+
+run_tests!

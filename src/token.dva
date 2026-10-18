@@ -1,0 +1,70 @@
+// syntax/src/token.dva — Token definitions and span models
+
+#use "color/palette"
+
+#public
+   // --- Token Classifications ---
+   TOKEN_TEXT      = 0
+   TOKEN_KEYWORD   = 1
+   TOKEN_TYPE      = 2
+   TOKEN_STRING    = 3
+   TOKEN_NUMBER    = 4
+   TOKEN_COMMENT   = 5
+   TOKEN_FUNCTION  = 6
+   TOKEN_OPERATOR  = 7
+   TOKEN_PUNCT     = 8
+   TOKEN_SPECIAL   = 9
+
+   // --- Inter-line Lexer State ---
+   STATE_NORMAL         = 0
+   STATE_BLOCK_COMMENT  = 1
+   STATE_TRIPLE_DOUBLE  = 2
+   STATE_TRIPLE_SINGLE  = 3
+   STATE_CODE_BLOCK     = 4
+
+   // --- Text Attribute Flags ---
+   ATTR_NONE = 0
+   ATTR_BOLD = 1
+   ATTR_DIM  = 2
+
+   // Styled text span
+   #type Span (
+      text: String,
+      kind: Int,
+      fg: Int,
+      attr: Int
+   )
+
+   // Complete highlighted line with carry-over state for subsequent lines
+   #type HighlightedLine (
+      spans: (Span){},
+      state_out: Int
+   )
+
+   // Map a token classification to a palette color
+   token_color: Int, palette::Palette => Int
+   token_color = kind, pal =>
+      kind
+         [TOKEN_KEYWORD]  pal.blue
+         [TOKEN_TYPE]     pal.yellow
+         [TOKEN_STRING]   pal.green
+         [TOKEN_NUMBER]   pal.orange
+         [TOKEN_COMMENT]  pal.muted
+         [TOKEN_FUNCTION] pal.cyan
+         [TOKEN_OPERATOR] pal.red
+         [TOKEN_PUNCT]    pal.border
+         [TOKEN_SPECIAL]  pal.purple
+         | pal.fg
+
+   // Map a token classification to text attributes (e.g. bold keywords)
+   token_attr: Int => Int
+   token_attr = kind =>
+      kind
+         [TOKEN_KEYWORD] ATTR_BOLD
+         [TOKEN_TYPE]    ATTR_BOLD
+         | ATTR_NONE
+
+   // Helper constructor for Span
+   make_span: String, Int, palette::Palette => Span
+   make_span = text, kind, pal =>
+      Span((text, kind, token_color(kind, pal), token_attr(kind)))

@@ -1,0 +1,198 @@
+// syntax/src/lang.dva — Supported languages, file extension detection, and keywords
+
+#public
+   LANG_PLAIN       = 0
+   LANG_EDVA        = 1
+   LANG_C           = 2
+   LANG_CPP         = 3
+   LANG_RUST        = 4
+   LANG_PYTHON      = 5
+   LANG_SHELL       = 6
+   LANG_JSON        = 7
+   LANG_TOML        = 8
+   LANG_MARKDOWN    = 9
+   LANG_HTML        = 10
+   LANG_DIFF        = 11
+   LANG_GO          = 12
+   LANG_ZIG         = 13
+   LANG_JS          = 14
+   LANG_TS          = 15
+   LANG_CCL         = 16
+   LANG_MAKEFILE    = 17
+
+   // Extract filename / basename from path
+   basename: String => String
+   basename = path =>
+      n = ?path
+      n == 0 | --| ""
+      last_slash' = -1
+      n @ i =>
+         path(i) == '/' | last_slash' = i
+      last_slash' !< 0
+         | path((last_slash' + 1)..)
+         | path
+
+   // Extract file extension in lowercase (without the leading dot)
+   extension: String => String
+   extension = path =>
+      base = basename(path)
+      n = ?base
+      n == 0 | --| ""
+      last_dot' = -1
+      n @ i =>
+         base(i) == '.' | last_dot' = i
+      last_dot' > 0 && last_dot' < (n - 1)
+         |
+            ext_raw = base((last_dot' + 1)..)
+            b = {?ext_raw}
+            ext_raw @ c =>
+               c !< 'A' && c !> 'Z' | b += (c + 32) | b += c
+            +b
+         | ""
+
+   // Detect language ID from path or filename
+   detect_language: String => Int
+   detect_language = path =>
+      base = basename(path)
+      base_lang =
+         base
+            ["Makefile", "makefile", "GNUmakefile"] LANG_MAKEFILE
+            ["Dockerfile", "dockerfile"]            LANG_SHELL
+            ["edva.ccl", "edva.lock.ccl"]           LANG_CCL
+            ["Cargo.toml", "Cargo.lock"]            LANG_TOML
+            | LANG_PLAIN
+      base_lang != LANG_PLAIN | --| base_lang
+
+      ext = extension(path)
+      ext
+         ["dva"]                                  LANG_EDVA
+         ["c", "h"]                               LANG_C
+         ["cpp", "hpp", "cc", "hh", "cxx", "hxx"] LANG_CPP
+         ["rs"]                                   LANG_RUST
+         ["py", "pyw", "pyi"]                     LANG_PYTHON
+         ["sh", "bash", "zsh", "fish", "env"]     LANG_SHELL
+         ["json"]                                 LANG_JSON
+         ["toml"]                                 LANG_TOML
+         ["ccl"]                                  LANG_CCL
+         ["md", "markdown", "mdown", "mkd"]       LANG_MARKDOWN
+         ["html", "htm", "xml", "svg"]            LANG_HTML
+         ["diff", "patch"]                        LANG_DIFF
+         ["go"]                                   LANG_GO
+         ["zig"]                                  LANG_ZIG
+         ["js", "mjs", "cjs", "jsx"]              LANG_JS
+         ["ts", "mts", "cts", "tsx"]              LANG_TS
+         | LANG_PLAIN
+
+   // Check if language supports // line comments
+   has_slash_slash_comment: Int => <>
+   has_slash_slash_comment = lang =>
+      lang == LANG_EDVA || lang == LANG_C || lang == LANG_CPP || lang == LANG_RUST ||
+      lang == LANG_GO || lang == LANG_ZIG || lang == LANG_JS || lang == LANG_TS
+
+   // Check if language supports /* ... */ block comments
+   has_slash_star_comment: Int => <>
+   has_slash_star_comment = lang =>
+      lang == LANG_EDVA || lang == LANG_C || lang == LANG_CPP || lang == LANG_RUST ||
+      lang == LANG_GO || lang == LANG_ZIG || lang == LANG_JS || lang == LANG_TS || lang == LANG_JSON
+
+   // Check if language supports # line comments
+   has_hash_comment: Int => <>
+   has_hash_comment = lang =>
+      lang == LANG_PYTHON || lang == LANG_SHELL || lang == LANG_TOML || lang == LANG_CCL || lang == LANG_MAKEFILE
+
+   // --- Language-Specific Keyword Sets ---
+   is_edva_kw: String => <>
+   is_edva_kw = w =>
+      w ["if", "else", "for", "while", "do", "switch", "case", "default", "break", "continue", "return", "type", "public", "extern", "use", "pragma", "test"]
+
+   is_c_kw: String => <>
+   is_c_kw = w =>
+      w ["if", "else", "for", "while", "do", "switch", "case", "default", "break", "continue", "return", "goto", "sizeof", "typedef", "struct", "union", "enum", "static", "const", "extern", "inline", "volatile", "auto", "register"]
+
+   is_cpp_kw: String => <>
+   is_cpp_kw = w =>
+      w ["if", "else", "for", "while", "do", "switch", "case", "default", "break", "continue", "return", "goto", "sizeof", "typedef", "struct", "union", "enum", "static", "const", "extern", "inline", "volatile", "auto", "class", "public", "private", "protected", "template", "typename", "namespace", "using", "new", "delete", "virtual", "override", "final", "constexpr", "try", "catch", "throw", "noexcept", "explicit", "friend", "operator", "this"]
+
+   is_rust_kw: String => <>
+   is_rust_kw = w =>
+      w ["as", "async", "await", "break", "const", "continue", "crate", "dyn", "else", "enum", "extern", "fn", "for", "if", "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref", "return", "self", "Self", "static", "struct", "super", "trait", "type", "unsafe", "use", "where", "while"]
+
+   is_python_kw: String => <>
+   is_python_kw = w =>
+      w ["and", "as", "assert", "async", "await", "break", "class", "continue", "def", "del", "elif", "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try", "while", "with", "yield"]
+
+   is_shell_kw: String => <>
+   is_shell_kw = w =>
+      w ["if", "then", "else", "elif", "fi", "case", "esac", "for", "while", "until", "do", "done", "in", "function", "select", "time", "local", "export", "readonly", "return", "exit", "echo"]
+
+   is_go_kw: String => <>
+   is_go_kw = w =>
+      w ["break", "case", "chan", "const", "continue", "default", "defer", "else", "fallthrough", "for", "func", "go", "goto", "if", "import", "interface", "map", "package", "range", "return", "select", "struct", "switch", "type", "var"]
+
+   is_zig_kw: String => <>
+   is_zig_kw = w =>
+      w ["const", "var", "fn", "pub", "return", "if", "else", "switch", "while", "for", "break", "continue", "struct", "enum", "union", "error", "try", "catch", "defer", "errdefer", "test", "comptime", "inline", "export", "extern", "unreachable", "and", "or", "orelse"]
+
+   is_js_ts_kw: String => <>
+   is_js_ts_kw = w =>
+      w ["function", "const", "let", "var", "return", "if", "else", "for", "while", "do", "switch", "case", "default", "break", "continue", "class", "interface", "type", "extends", "implements", "import", "export", "from", "as", "new", "this", "super", "async", "await", "yield", "try", "catch", "finally", "throw", "typeof", "instanceof", "in", "of", "debugger"]
+
+   // Check if an identifier is a keyword in the given language
+   is_keyword: Int, String => <>
+   is_keyword = lang, w =>
+      lang == LANG_EDVA                  | --| is_edva_kw(w)
+      lang == LANG_C                     | --| is_c_kw(w)
+      lang == LANG_CPP                   | --| is_cpp_kw(w)
+      lang == LANG_RUST                  | --| is_rust_kw(w)
+      lang == LANG_PYTHON                | --| is_python_kw(w)
+      lang == LANG_SHELL                 | --| is_shell_kw(w)
+      lang == LANG_GO                    | --| is_go_kw(w)
+      lang == LANG_ZIG                   | --| is_zig_kw(w)
+      lang == LANG_JS || lang == LANG_TS | --| is_js_ts_kw(w)
+      <->
+
+   // --- Language-Specific Type Sets ---
+   is_edva_type_name: String => <>
+   is_edva_type_name = w =>
+      w ["Int", "String", "Rune", "Float", "Addr", "Ram", "RamPN", "u8", "u16", "u32", "u64", "i8", "i16", "i32", "i64"]
+
+   is_c_type_name: String => <>
+   is_c_type_name = w =>
+      w ["int", "char", "short", "long", "float", "double", "void", "unsigned", "signed", "size_t", "ssize_t", "uint8_t", "uint16_t", "uint32_t", "uint64_t", "int8_t", "int16_t", "int32_t", "int64_t", "bool", "uintptr_t", "intptr_t", "string", "vector", "map", "unique_ptr", "shared_ptr"]
+
+   is_rust_type_name: String => <>
+   is_rust_type_name = w =>
+      w ["bool", "char", "str", "u8", "u16", "u32", "u64", "u128", "usize", "i8", "i16", "i32", "i64", "i128", "isize", "f32", "f64", "Option", "Result", "String", "Vec", "Box", "Rc", "Arc"]
+
+   is_python_type_name: String => <>
+   is_python_type_name = w =>
+      w ["int", "str", "float", "bool", "list", "dict", "set", "tuple", "bytes", "object", "type"]
+
+   is_go_type_name: String => <>
+   is_go_type_name = w =>
+      w ["bool", "byte", "complex64", "complex128", "error", "float32", "float64", "int", "int8", "int16", "int32", "int64", "rune", "string", "uint", "uint8", "uint16", "uint32", "uint64", "uintptr"]
+
+   is_zig_type_name: String => <>
+   is_zig_type_name = w =>
+      w ["bool", "i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64", "isize", "usize", "f16", "f32", "f64", "f128", "void", "anyerror", "type"]
+
+   is_ts_type_name: String => <>
+   is_ts_type_name = w =>
+      w ["string", "number", "boolean", "any", "void", "never", "unknown", "object", "symbol", "bigint", "Array", "Record", "Promise"]
+
+   // Check if an identifier is a standard type name
+   is_type: Int, String => <>
+   is_type = lang, w =>
+      lang == LANG_EDVA                   | --| is_edva_type_name(w)
+      lang == LANG_C || lang == LANG_CPP  | --| is_c_type_name(w)
+      lang == LANG_RUST                   | --| is_rust_type_name(w)
+      lang == LANG_PYTHON                 | --| is_python_type_name(w)
+      lang == LANG_GO                     | --| is_go_type_name(w)
+      lang == LANG_ZIG                    | --| is_zig_type_name(w)
+      lang == LANG_TS                     | --| is_ts_type_name(w)
+      <->
+
+   // Check if an identifier is a standard constant (boolean, null, none)
+   is_constant: Int, String => <>
+   is_constant = lang, w =>
+      w ["true", "false", "True", "False", "null", "NULL", "nullptr", "nil", "None", "undefined", "NaN"]

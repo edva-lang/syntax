@@ -9,7 +9,7 @@
 #use "lang"
 #use "token"
 
-print_spans_ansi: (syntax::Span){} => ()
+print_spans_ansi: syntax::Span{} => ()
 print_spans_ansi = spans =>
    spans @ sp =>
       c = sp.fg
@@ -32,7 +32,7 @@ print_file = path =>
    n = libc::read(fd, &buf, 65536)
    libc::close(fd)
    n !> 0 | --|
-   lines = (String){}
+   lines = String{}
    cur = {256}
    n @ i =>
       c = @[&buf + i u8]
@@ -59,7 +59,7 @@ run_tests = !=>
 
    // 1. Language Detection Tests
    io::out("--- Language Detection ---\n")
-   paths = (String){}
+   paths = String{}
    paths += "test.dva"
    paths += "main.c"
    paths += "engine.rs"
@@ -77,7 +77,7 @@ run_tests = !=>
 
    // 2. Edva Highlighting Test
    io::out("--- Edva Code Sample ---\n")
-   edva_lines = (String){}
+   edva_lines = String{}
    edva_lines += "// Calculate factorial with accumulator"
    edva_lines += "#use io"
    edva_lines += "#use str"
@@ -96,7 +96,7 @@ run_tests = !=>
 
    // 3. Rust Code Sample with Block Comments
    io::out("--- Rust Code Sample ---\n")
-   rust_lines = (String){}
+   rust_lines = String{}
    rust_lines += "/* Multi-line header comment"
    rust_lines += "   explaining algorithm */"
    rust_lines += "pub fn compute(items: &Vec<u64>) -> Option<u64> {"
@@ -114,7 +114,7 @@ run_tests = !=>
 
    // 4. Python Code Sample
    io::out("--- Python Code Sample ---\n")
-   py_lines = (String){}
+   py_lines = String{}
    py_lines += "import os, sys"
    py_lines += ""
    py_lines += "def find_files(root: str, pattern: str) -> list[str]:"
@@ -132,7 +132,7 @@ run_tests = !=>
 
    // 5. Diff Sample
    io::out("--- Git Diff Sample ---\n")
-   diff_lines = (String){}
+   diff_lines = String{}
    diff_lines += "diff --git a/src/main.dva b/src/main.dva"
    diff_lines += "index 1234567..89abcdef 100644"
    diff_lines += "--- a/src/main.dva"

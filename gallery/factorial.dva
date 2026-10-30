@@ -18,9 +18,9 @@
          d' = d' + 2
       prime'
 
-   primes_up_to: Int => (Int){}
+   primes_up_to: Int => Int{}
    primes_up_to = limit =>
-      res = (Int){}
+      res = Int{}
       2..limit @ x =>
          is_prime(x) | res += x
       res

@@ -37,7 +37,7 @@
 
    // Complete highlighted line with carry-over state for subsequent lines
    #type HighlightedLine (
-      spans: (Span){},
+      spans: Span{},
       state_out: Int
    )
 
@@ -67,4 +67,4 @@
    // Helper constructor for Span
    make_span: String, Int, palette::Palette => Span
    make_span = text, kind, pal =>
-      Span((text, kind, token_color(kind, pal), token_attr(kind)))
+      Span(text, kind, token_color(kind, pal), token_attr(kind))

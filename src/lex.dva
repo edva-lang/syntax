@@ -38,76 +38,76 @@
    // Highlight unified diff output
    highlight_diff: String, palette::Palette => token::HighlightedLine
    highlight_diff = line_str, pal =>
-      spans = (token::Span){}
+      spans = token::Span{}
       line_len = ?line_str
-      line_len [0] --| token::HighlightedLine((spans, token::STATE_NORMAL))
+      line_len [0] --| token::HighlightedLine(spans, token::STATE_NORMAL)
       c0 = line_str(0)
       (c0 ['+']) && (line_len < 3 || line_str(0..3) != "+++") |
          spans += token::make_span(line_str, token::TOKEN_STRING, pal)
-         --| token::HighlightedLine((spans, token::STATE_NORMAL))
+         --| token::HighlightedLine(spans, token::STATE_NORMAL)
       (c0 ['-']) && (line_len < 3 || line_str(0..3) != "---") |
          spans += token::make_span(line_str, token::TOKEN_OPERATOR, pal)
-         --| token::HighlightedLine((spans, token::STATE_NORMAL))
+         --| token::HighlightedLine(spans, token::STATE_NORMAL)
       (c0 ['@']) && (line_len > 1 && (line_str(1) ['@'])) |
          spans += token::make_span(line_str, token::TOKEN_FUNCTION, pal)
-         --| token::HighlightedLine((spans, token::STATE_NORMAL))
+         --| token::HighlightedLine(spans, token::STATE_NORMAL)
       line_len !< 4 && (line_str(0..4) ["diff", "--- ", "+++ "]) |
          spans += token::make_span(line_str, token::TOKEN_SPECIAL, pal)
-         --| token::HighlightedLine((spans, token::STATE_NORMAL))
+         --| token::HighlightedLine(spans, token::STATE_NORMAL)
       spans += token::make_span(line_str, token::TOKEN_TEXT, pal)
-      token::HighlightedLine((spans, token::STATE_NORMAL))
+      token::HighlightedLine(spans, token::STATE_NORMAL)
 
    // Highlight markdown line
    highlight_markdown: String, Int, palette::Palette => token::HighlightedLine
    highlight_markdown = line_str, state_in, pal =>
-      spans = (token::Span){}
+      spans = token::Span{}
       line_len = ?line_str
-      line_len [0] --| token::HighlightedLine((spans, state_in))
+      line_len [0] --| token::HighlightedLine(spans, state_in)
 
       // Inside fenced code block
       state_in [token::STATE_CODE_BLOCK]
          line_len !< 3 && (line_str(0..3) ["```"]) |
             spans += token::make_span(line_str, token::TOKEN_FUNCTION, pal)
-            --| token::HighlightedLine((spans, token::STATE_NORMAL))
+            --| token::HighlightedLine(spans, token::STATE_NORMAL)
          spans += token::make_span(line_str, token::TOKEN_TEXT, pal)
-         --| token::HighlightedLine((spans, token::STATE_CODE_BLOCK))
+         --| token::HighlightedLine(spans, token::STATE_CODE_BLOCK)
 
       // Fenced code block opening
       line_len !< 3 && (line_str(0..3) ["```"]) |
          spans += token::make_span(line_str, token::TOKEN_FUNCTION, pal)
-         --| token::HighlightedLine((spans, token::STATE_CODE_BLOCK))
+         --| token::HighlightedLine(spans, token::STATE_CODE_BLOCK)
 
       // Headings: # Heading
       (line_str(0) ['#']) |
          spans += token::make_span(line_str, token::TOKEN_TYPE, pal)
-         --| token::HighlightedLine((spans, token::STATE_NORMAL))
+         --| token::HighlightedLine(spans, token::STATE_NORMAL)
 
       // Blockquotes: > Quote
       (line_str(0) ['>']) |
          spans += token::make_span(">", token::TOKEN_KEYWORD, pal)
          line_len > 1 |
             spans += token::make_span(line_str(1..), token::TOKEN_COMMENT, pal)
-            --| token::HighlightedLine((spans, token::STATE_NORMAL))
-         --| token::HighlightedLine((spans, token::STATE_NORMAL))
+            --| token::HighlightedLine(spans, token::STATE_NORMAL)
+         --| token::HighlightedLine(spans, token::STATE_NORMAL)
 
       // Bullet lists: - item or * item
       line_len > 1 && (line_str(0..2) ["- ", "* "]) |
          spans += token::make_span(line_str(0..2), token::TOKEN_KEYWORD, pal)
          line_len > 2 |
             spans += token::make_span(line_str(2..), token::TOKEN_TEXT, pal)
-            --| token::HighlightedLine((spans, token::STATE_NORMAL))
-         --| token::HighlightedLine((spans, token::STATE_NORMAL))
+            --| token::HighlightedLine(spans, token::STATE_NORMAL)
+         --| token::HighlightedLine(spans, token::STATE_NORMAL)
 
       // Regular line
       spans += token::make_span(line_str, token::TOKEN_TEXT, pal)
-      token::HighlightedLine((spans, token::STATE_NORMAL))
+      token::HighlightedLine(spans, token::STATE_NORMAL)
 
    // Highlight a single line of text with inter-line state tracking
    highlight_line: Int, String, Int, palette::Palette => token::HighlightedLine
    highlight_line = lang_id, line_str, state_in, pal =>
-      spans = (token::Span){}
+      spans = token::Span{}
       line_len = ?line_str
-      line_len [0] --| token::HighlightedLine((spans, state_in))
+      line_len [0] --| token::HighlightedLine(spans, state_in)
 
       // Dispatch to specialized highlighters
       lang_id [lang::LANG_DIFF]     --| highlight_diff(line_str, pal)
@@ -128,7 +128,7 @@
                cur_state' = token::STATE_NORMAL
             |
                spans += token::make_span(line_str, token::TOKEN_COMMENT, pal)
-               --| token::HighlightedLine((spans, token::STATE_BLOCK_COMMENT))
+               --| token::HighlightedLine(spans, token::STATE_BLOCK_COMMENT)
 
       // Python triple-double quotes continuation
       cur_state' [token::STATE_TRIPLE_DOUBLE]
@@ -141,7 +141,7 @@
                cur_state' = token::STATE_NORMAL
             |
                spans += token::make_span(line_str, token::TOKEN_STRING, pal)
-               --| token::HighlightedLine((spans, token::STATE_TRIPLE_DOUBLE))
+               --| token::HighlightedLine(spans, token::STATE_TRIPLE_DOUBLE)
 
       // Python triple-single quotes continuation
       cur_state' [token::STATE_TRIPLE_SINGLE]
@@ -154,7 +154,7 @@
                cur_state' = token::STATE_NORMAL
             |
                spans += token::make_span(line_str, token::TOKEN_STRING, pal)
-               --| token::HighlightedLine((spans, token::STATE_TRIPLE_SINGLE))
+               --| token::HighlightedLine(spans, token::STATE_TRIPLE_SINGLE)
 
       // --- Main Token Scanning Loop ---
       0.. @
@@ -325,4 +325,4 @@
          spans += token::make_span(line_str(idx'..idx' + 1), token::TOKEN_TEXT, pal)
          idx' = idx' + 1
 
-      token::HighlightedLine((spans, cur_state'))
+      token::HighlightedLine(spans, cur_state')

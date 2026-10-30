@@ -25,9 +25,9 @@
       lex::highlight_line(lang_id, line_str, state_in, pal)
 
    // Highlight a list of lines in sequence, carrying state across lines
-   highlight_lines: Int, (String){}, palette::Palette => (token::HighlightedLine){}
+   highlight_lines: Int, String{}, palette::Palette => token::HighlightedLine{}
    highlight_lines = lang_id, lines, pal =>
-      out = (token::HighlightedLine){}
+      out = token::HighlightedLine{}
       st' = token::STATE_NORMAL
       lines @ line =>
          res = lex::highlight_line(lang_id, line, st', pal)

@@ -1,18 +1,22 @@
-# syntax
+# syntax — Streaming Syntax Highlighting Library for Edva
 
-Streaming syntax highlighting and tokenization library for [Edva](https://github.com/edva-lang/edva).
+`syntax` is a streaming syntax highlighting and tokenization library written in [Edva](https://gitea.gde.to/ike/dva). It provides cross-line state-preserving lexers and palette-driven token coloring for CLI viewers, editors, and TUI applications such as [`vade`](../vade/README.md).
+
+---
 
 ## Features
 
-- **Multi-Language Lexing**: Built-in tokenizers with cross-line state preservation (handles multiline comments, raw strings, block quotes).
-- **Automatic Language Detection**: Detects language by filename or file extension (`.dva`, `.rs`, `.c`, `.py`, `.go`, `.zig`, etc.).
-- **Palette & Theme Driven**: Resolves tokens into RGB colors using customizable palettes (e.g. Catppuccin Mocha/Latte, ANSI, standard terminal colors).
-- **Zero Heavy Dependencies**: Pure Edva implementation designed for CLI viewers, editors, and TUI applications.
+- **Cross-Line State Preservation**: Tracks multiline block comments (`STATE_BLOCK_COMMENT`), triple-quoted strings (`STATE_TRIPLE_DOUBLE`, `STATE_TRIPLE_SINGLE`), and fenced Markdown code blocks (`STATE_CODE_BLOCK`) seamlessly across lines.
+- **Automatic Language Detection**: Detects language ID from file paths, filenames, or extensions (`syntax::detect_language`).
+- **Palette-Driven Coloring**: Integrates directly with `std/color/palette` (`palette::Palette`) to map semantic token classifications (`TOKEN_KEYWORD`, `TOKEN_TYPE`, `TOKEN_STRING`, `TOKEN_NUMBER`, `TOKEN_COMMENT`, `TOKEN_FUNCTION`, `TOKEN_OPERATOR`, `TOKEN_PUNCT`, `TOKEN_SPECIAL`) to 24-bit RGB colors and text attributes (`ATTR_BOLD`, `ATTR_NONE`).
+- **Zero External Dependencies**: Pure Edva implementation with fast character-class scanning via `std/ascii`.
+
+---
 
 ## Supported Languages
 
-| Language | Extensions / Filenames | ID Constant |
-|---|---|---|
+| Language | Extensions / Filenames | ID Constant (`lang::*`) |
+| :--- | :--- | :--- |
 | **Edva** | `.dva` | `LANG_EDVA` |
 | **Rust** | `.rs` | `LANG_RUST` |
 | **C / C++** | `.c`, `.h`, `.cpp`, `.cc`, `.cxx`, `.hpp` | `LANG_C`, `LANG_CPP` |
@@ -31,46 +35,66 @@ Streaming syntax highlighting and tokenization library for [Edva](https://github
 | **Diff** | `.diff`, `.patch` | `LANG_DIFF` |
 | **Makefile** | `Makefile`, `makefile`, `.mk` | `LANG_MAKEFILE` |
 
+---
+
 ## Installation
 
-Add to your `edva.ccl`:
+Add `syntax` to your `edva.ccl`:
 
 ```ccl
 dependencies =
   syntax =
-    git = "https://github.com/edva-lang/syntax"
-    rev = "v0.1.0"
+    path = ../syntax
 ```
+
+---
 
 ## Quick Start
 
-```edva
-#use "syntax"
+```dva
 #use "color/palette"
+#use @syntax
 
-// Detect language
-lang = syntax::detect_language("src/main.dva")
+// 1. Detect language from filename
+lang_id = syntax::detect_language("src/main.dva")
 
-// Highlight a sequence of lines using a palette
-pal = palette::catppuccin_mocha()
-lines = ("// Hello Edva", "main = !=> 0")
-highlighted = syntax::highlight_lines(lang, lines, pal)
+// 2. Highlight a sequence of lines using a standard palette
+pal = palette::TOKYONIGHT
+lines = ("// Hello Edva", "main: () => Int", "main = !=> 0")
+highlighted = syntax::highlight_lines(lang_id, lines, pal)
 
-// Iterate over highlighted line spans
+// 3. Iterate over highlighted line spans
 highlighted @ hline =>
    hline.spans @ span =>
-      // span.str   -> token text
-      // span.color -> 24-bit RGB integer
-      // span.kind  -> token kind (KEYWORD, STRING, COMMENT, etc.)
+      // span.text -> token substring (String)
+      // span.kind -> token classification (TOKEN_KEYWORD, TOKEN_STRING, etc.)
+      // span.fg   -> 24-bit RGB foreground color (Int)
+      // span.attr -> style attribute flags (ATTR_NONE, ATTR_BOLD)
+      <+>
 ```
+
+For single-line incremental highlighting with explicit state carry-over:
+
+```dva
+res = syntax::highlight_line(lang_id, line_str, state_in, pal)
+// res.spans     -> syntax::Span{}
+// res.state_out -> Int (pass as state_in to the next line)
+```
+
+---
 
 ## Architecture
 
-- [`src/lang.dva`](src/lang.dva): Language IDs, file extension associations, and keyword tables.
-- [`src/token.dva`](src/token.dva): Token definitions (`Span`, `HighlightedLine`, token kinds, and palette color mapping).
-- [`src/lex.dva`](src/lex.dva): Streaming tokenizer with state persistence across lines (`state_in` / `state_out`).
-- [`src/syntax.dva`](src/syntax.dva): High-level public facade.
+- [`src/lang.dva`](src/lang.dva): Language ID constants (`LANG_*`), file extension detection (`detect_language`), and per-language keyword/type tables.
+- [`src/token.dva`](src/token.dva): `Span` and `HighlightedLine` record definitions, token classification constants (`TOKEN_*`), lexer state constants (`STATE_*`), and `token_color` / `token_attr` mappers.
+- [`src/lex.dva`](src/lex.dva): Streaming state-machine tokenizer (`highlight_line`).
+- [`src/syntax.dva`](src/syntax.dva): Top-level public facade (`detect_language`, `token_color`, `highlight_line`, `highlight_lines`).
 
-## License
+---
 
-BSD-2-Clause
+## Running Tests
+
+```bash
+cd ~/Z/edva-ware/syntax
+edva test
+```

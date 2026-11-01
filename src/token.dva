@@ -58,11 +58,10 @@
 
    // Map a token classification to text attributes (e.g. bold keywords)
    token_attr: Int => Int
-   token_attr = kind =>
-      kind
-         [TOKEN_KEYWORD] ATTR_BOLD
-         [TOKEN_TYPE]    ATTR_BOLD
-         | ATTR_NONE
+   token_attr =
+      [TOKEN_KEYWORD] ATTR_BOLD
+      [TOKEN_TYPE]    ATTR_BOLD
+      | ATTR_NONE
 
    // Helper constructor for Span
    make_span: String, Int, palette::Palette => Span

@@ -8,12 +8,10 @@
 #public
 
    is_operator_char: Int => <>
-   is_operator_char = c =>
-      c ['|', '=', '+', '-', '*', '/', '%', '&', '^', '!', '<', '>', ':', '~', '?', '@']
+   is_operator_char = ['|', '=', '+', '-', '*', '/', '%', '&', '^', '!', '<', '>', ':', '~', '?', '@']
 
    is_delimiter_char: Int => <>
-   is_delimiter_char = c =>
-      c ['[', ']', '(', ')', '{', '}', ';', ',']
+   is_delimiter_char = ['[', ']', '(', ')', '{', '}', ';', ',']
 
    // Search for substring in line starting at from_idx
    find_sub: String, String, Int => Int
@@ -157,6 +155,12 @@
                --| token::HighlightedLine(spans, token::STATE_TRIPLE_SINGLE)
 
       // --- Main Token Scanning Loop ---
+      kw_pred = lang::is_keyword(lang_id)
+      type_pred = lang::is_type(lang_id)
+      has_ss_comment = lang::has_slash_slash_comment(lang_id)
+      has_ss_block = lang::has_slash_star_comment(lang_id)
+      has_hash = lang::has_hash_comment(lang_id)
+
       0.. @
          idx' !< line_len | -->
          c = line_str(idx')
@@ -173,13 +177,13 @@
             --^
 
          // B. // Comments
-         lang::has_slash_slash_comment(lang_id) && (c ['/']) && (idx' + 1 < line_len) && (line_str(idx' + 1) ['/']) |
+         has_ss_comment && (c ['/']) && (idx' + 1 < line_len) && (line_str(idx' + 1) ['/']) |
             spans += token::make_span(line_str(idx'..), token::TOKEN_COMMENT, pal)
             idx' = line_len
             -->
 
          // C. /* */ Block Comments
-         lang::has_slash_star_comment(lang_id) && (c ['/']) && (idx' + 1 < line_len) && (line_str(idx' + 1) ['*']) |
+         has_ss_block && (c ['/']) && (idx' + 1 < line_len) && (line_str(idx' + 1) ['*']) |
             close_pos = find_sub(line_str, "*/", idx' + 2)
             close_pos !< 0
                |
@@ -205,7 +209,7 @@
                      !ascii::is_alnum(ch) && !(ch ['_']) | -->
                   spans += token::make_span(line_str(dir_start..idx'), token::TOKEN_SPECIAL, pal)
                |
-                  lang::has_hash_comment(lang_id)
+                  has_hash
                      |
                         spans += token::make_span(line_str(idx'..), token::TOKEN_COMMENT, pal)
                         idx' = line_len
@@ -282,26 +286,24 @@
                !ascii::is_alnum(ch) && !(ch ['_']) | -->
             word = line_str(id_start..idx')
 
-            lang::is_keyword(lang_id, word)
-               | spans += token::make_span(word, token::TOKEN_KEYWORD, pal)
-               | lang::is_type(lang_id, word)
-                  | spans += token::make_span(word, token::TOKEN_TYPE, pal)
-                  | lang::is_constant(lang_id, word)
-                     | spans += token::make_span(word, token::TOKEN_NUMBER, pal)
-                     |
-                        // Check if function call (followed by '(')
-                        peek_idx' = idx'
-                        0.. @
-                           peek_idx' !< line_len | -->
-                           pch = line_str(peek_idx')
-                           pch [' ', '\t']
-                              peek_idx' = peek_idx' + 1
-                              --^
-                           -->
-                        is_fn = peek_idx' < line_len && (line_str(peek_idx') ['('])
-                        is_fn
-                           | spans += token::make_span(word, token::TOKEN_FUNCTION, pal)
-                           | spans += token::make_span(word, token::TOKEN_TEXT, pal)
+            word
+               [kw_pred] spans += token::make_span(word, token::TOKEN_KEYWORD, pal)
+               [type_pred] spans += token::make_span(word, token::TOKEN_TYPE, pal)
+               [lang::is_constant] spans += token::make_span(word, token::TOKEN_NUMBER, pal)
+               |
+                  // Check if function call (followed by '(')
+                  peek_idx' = idx'
+                  0.. @
+                     peek_idx' !< line_len | -->
+                     pch = line_str(peek_idx')
+                     pch [' ', '\t']
+                        peek_idx' = peek_idx' + 1
+                        --^
+                     -->
+                  is_fn = peek_idx' < line_len && (line_str(peek_idx') ['('])
+                  is_fn
+                     | spans += token::make_span(word, token::TOKEN_FUNCTION, pal)
+                     | spans += token::make_span(word, token::TOKEN_TEXT, pal)
             --^
 
          // I. Delimiters and Punctuation

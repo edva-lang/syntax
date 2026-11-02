@@ -134,7 +134,7 @@
 
    // --- Language-Specific Type Sets ---
    is_edva_type_name: String => <>
-   is_edva_type_name = ["Int", "String", "Rune", "Float", "Addr", "Ram", "RamPN", "u8", "u16", "u32", "u64", "i8", "i16", "i32", "i64"]
+   is_edva_type_name = ["Int", "String", "Rune", "Float", "Addr", "Address", "Builder", "Error", "Type", "u8", "u16", "u32", "u64", "i1", "i8", "i16", "i32", "i64", "f32", "f64", "float", "double", "void", "ptr"]
 
    is_c_type_name: String => <>
    is_c_type_name = ["int", "char", "short", "long", "float", "double", "void", "unsigned", "signed", "size_t", "ssize_t", "uint8_t", "uint16_t", "uint32_t", "uint64_t", "int8_t", "int16_t", "int32_t", "int64_t", "bool", "uintptr_t", "intptr_t", "string", "vector", "map", "unique_ptr", "shared_ptr"]

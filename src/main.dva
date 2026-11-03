@@ -32,16 +32,17 @@ print_file = path =>
    n = libc::read(fd, &buf, 65536)
    libc::close(fd)
    n !> 0 | --|
+   ?buf = n
    lines = String{}
    cur = {256}
    n @ i =>
-      c = @[&buf + i u8]
-      c == 10u8
+      c = buf(i)
+      c == 10
          |
             lines += +cur
             cur = {256}
          |
-            c != 13u8 | cur += Rune(c)
+            c != 13 | cur += c
    ?cur > 0 | lines += +cur
 
    lang_id = syntax::detect_language(path)

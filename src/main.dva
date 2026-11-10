@@ -4,10 +4,10 @@
 #use sys
 #use libc
 #use str
-#use "color/palette"
-#use syntax
-#use "lang"
-#use "token"
+#use color/palette
+#use ./syntax
+#use ./lang
+#use ./token
 
 print_spans_ansi: syntax::Span{} => ()
 print_spans_ansi = spans =>

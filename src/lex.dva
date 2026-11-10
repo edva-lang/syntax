@@ -1,17 +1,17 @@
 // syntax/src/lex.dva — Fast streaming line tokenizer
 
 #use ascii
-#use "color/palette"
-#use "token"
-#use "lang"
+#use color/palette
+#use ./token
+#use ./lang
 
 #public
 
    is_operator_char: Int => <>
-   is_operator_char = ['|', '=', '+', '-', '*', '/', '%', '&', '^', '!', '<', '>', ':', '~', '?', '@']
+   is_operator_char = ['|, '=, '+, '-, '*, '/, '%, '&, '^, '!, '<, '>, ':, '~, '?, '@]
 
    is_delimiter_char: Int => <>
-   is_delimiter_char = ['[', ']', '(', ')', '{', '}', ';', ',']
+   is_delimiter_char = ['[, '], '(, '), '{, '}, ';, ',]
 
    // Search for substring in line starting at from_idx
    find_sub: String, String, Int => Int
@@ -40,13 +40,13 @@
       line_len = ?line_str
       line_len [0] --| token::HighlightedLine(spans, token::STATE_NORMAL)
       c0 = line_str(0)
-      c0 ['+'] && (line_len < 3 || line_str(0..3) != "+++") |
+      c0 ['+] && (line_len < 3 || line_str(0..3) != "+++") |
          spans += token::make_span(line_str, token::TOKEN_STRING, pal)
          --| token::HighlightedLine(spans, token::STATE_NORMAL)
-      c0 ['-'] && (line_len < 3 || line_str(0..3) != "---") |
+      c0 ['-] && (line_len < 3 || line_str(0..3) != "---") |
          spans += token::make_span(line_str, token::TOKEN_OPERATOR, pal)
          --| token::HighlightedLine(spans, token::STATE_NORMAL)
-      c0 ['@'] && line_len > 1 && line_str(1) ['@'] |
+      c0 ['@] && line_len > 1 && line_str(1) ['@] |
          spans += token::make_span(line_str, token::TOKEN_FUNCTION, pal)
          --| token::HighlightedLine(spans, token::STATE_NORMAL)
       line_len !< 4 && line_str(0..4) ["diff", "--- ", "+++ "] |
@@ -76,12 +76,12 @@
          --| token::HighlightedLine(spans, token::STATE_CODE_BLOCK)
 
       // Headings: # Heading
-      (line_str(0) ['#']) |
+      (line_str(0) ['#]) |
          spans += token::make_span(line_str, token::TOKEN_TYPE, pal)
          --| token::HighlightedLine(spans, token::STATE_NORMAL)
 
       // Blockquotes: > Quote
-      (line_str(0) ['>']) |
+      (line_str(0) ['>]) |
          spans += token::make_span(">", token::TOKEN_KEYWORD, pal)
          line_len > 1 |
             spans += token::make_span(line_str(1..), token::TOKEN_COMMENT, pal)
@@ -166,24 +166,24 @@
          c = line_str(idx')
 
          // A. Whitespace Run
-         c [' ', '\t', '\r']
+         c ['\s, '\t, '\r]
             ws_start = idx'
             0.. @
                idx' = idx' + 1
                idx' !< line_len | -->
                ch = line_str(idx')
-               ch ![' ', '\t', '\r'] | -->
+               ch !['\s, '\t, '\r] | -->
             spans += token::make_span(line_str(ws_start..idx'), token::TOKEN_TEXT, pal)
             --^
 
          // B. // Comments
-         has_ss_comment && c ['/'] && idx' + 1 < line_len && line_str(idx' + 1) ['/'] |
+         has_ss_comment && c ['/] && idx' + 1 < line_len && line_str(idx' + 1) ['/] |
             spans += token::make_span(line_str(idx'..), token::TOKEN_COMMENT, pal)
             idx' = line_len
             -->
 
          // C. /* */ Block Comments
-         has_ss_block && c ['/'] && idx' + 1 < line_len && line_str(idx' + 1) ['*'] |
+         has_ss_block && c ['/] && idx' + 1 < line_len && line_str(idx' + 1) ['*] |
             close_pos = find_sub(line_str, "*/", idx' + 2)
             close_pos !< 0
                |
@@ -197,33 +197,33 @@
             --^
 
          // D. Hash Comments or Directives (#)
-         c ['#']
+         c ['#]
             lang_id [lang::LANG_EDVA, lang::LANG_C, lang::LANG_CPP]
                |
                   // Directive in Edva / C / C++
                   dir_start = idx'
-                  idx' + 1 < line_len && line_str(idx' + 1) ['!']
+                  idx' + 1 < line_len && line_str(idx' + 1) ['!]
                      | idx' = idx' + 2
                      |
                         0.. @
                            idx' = idx' + 1
                            idx' !< line_len | -->
                            ch = line_str(idx')
-                           ch !['a'...'z', 'A'...'Z', '0'...'9', '_', '-'] | -->
+                           ch !['a...'z, 'A...'Z, '0...'9, '_, '-] | -->
                   dir_word = line_str(dir_start..idx')
                   spans += token::make_span(dir_word, token::TOKEN_SPECIAL, pal)
                   lang_id [lang::LANG_EDVA] && dir_word ["#use", "#use-dynamic"] |
                      ws_start = idx'
                      0.. @
                         idx' !< line_len | -->
-                        line_str(idx') ![' ', '\t'] | -->
+                        line_str(idx') !['\s, '\t] | -->
                         idx' = idx' + 1
                      idx' > ws_start |
                         spans += token::make_span(line_str(ws_start..idx'), token::TOKEN_TEXT, pal)
                      mod_start = idx'
                      0.. @
                         idx' !< line_len | -->
-                        line_str(idx') [' ', '\t', '\r'] | -->
+                        line_str(idx') ['\s, '\t, '\r] | -->
                         idx' = idx' + 1
                      idx' > mod_start |
                         spans += token::make_span(line_str(mod_start..idx'), token::TOKEN_STRING, pal)
@@ -263,8 +263,36 @@
                   cur_state' = token::STATE_TRIPLE_SINGLE
             --^
 
+         // F0. Edva Leading-Apostrophe Rune Literals ('a, '\s, '', '\x7f, '\u{...})
+         lang_id [lang::LANG_EDVA] && c [''] |
+            r_start = idx'
+            idx' = idx' + 1
+            idx' < line_len
+               |
+                  ch1 = line_str(idx')
+                  ch1 ['\\]
+                     |
+                        idx' = idx' + 1
+                        idx' < line_len
+                           |
+                              ch2 = line_str(idx')
+                              idx' = idx' + 1
+                              ch2 ['x] && idx' + 1 < line_len
+                                 | idx' = idx' + 2
+                                 |
+                                    ch2 ['u] && idx' < line_len && line_str(idx') ['{]
+                                       |
+                                          0.. @
+                                             idx' !< line_len | -->
+                                             uch = line_str(idx')
+                                             idx' = idx' + 1
+                                             uch ['}] | -->
+                     | idx' = idx' + 1
+            spans += token::make_span(line_str(r_start..idx'), token::TOKEN_STRING, pal)
+            --^
+
          // F. Standard Quoted Strings: ", ', `
-         c ['"', '\'', '`']
+         c ['", '', '`]
             q_char = c
             str_start = idx'
             idx' = idx' + 1
@@ -274,7 +302,7 @@
                ch = line_str(idx')
                esc'
                   | esc' = <->
-                  | ch ['\\']
+                  | ch ['\\]
                      | esc' = <+>
                      | ch [q_char]
                         |
@@ -307,33 +335,33 @@
             --^
 
          // F3. Range Operators (..., ..=, ..)
-         c ['.'] && idx' + 1 < line_len && line_str(idx' + 1) ['.'] |
-            rng_len = idx' + 2 < line_len && line_str(idx' + 2) ['.', '='] | 3 | 2
+         c ['.] && idx' + 1 < line_len && line_str(idx' + 1) ['.] |
+            rng_len = idx' + 2 < line_len && line_str(idx' + 2) ['., '=] | 3 | 2
             spans += token::make_span(line_str(idx'..idx' + rng_len), token::TOKEN_OPERATOR, pal)
             idx' = idx' + rng_len
             --^
 
          // G. Numbers (including negative numbers like -42, -3.14)
-         is_neg_num = c ['-'] && idx' + 1 < line_len && ascii::is_digit(line_str(idx' + 1)) && (idx' == 0 || line_str(idx' - 1) !['a'...'z', 'A'...'Z', '0'...'9', '_', ')', ']', '}'])
-         is_neg_num || ascii::is_digit(c) || (c ['.'] && idx' + 1 < line_len && ascii::is_digit(line_str(idx' + 1))) |
+         is_neg_num = c ['-] && idx' + 1 < line_len && ascii::is_digit(line_str(idx' + 1)) && (idx' == 0 || line_str(idx' - 1) !['a...'z, 'A...'Z, '0...'9, '_, '), '], '}])
+         is_neg_num || ascii::is_digit(c) || (c ['.] && idx' + 1 < line_len && ascii::is_digit(line_str(idx' + 1))) |
             num_start = idx'
             0.. @
                idx' = idx' + 1
                idx' !< line_len | -->
                ch = line_str(idx')
-               ch ['.'] && idx' + 1 < line_len && line_str(idx' + 1) ['.'] | -->
-               ch !['a'...'z', 'A'...'Z', '0'...'9', '.', '_'] | -->
+               ch ['.] && idx' + 1 < line_len && line_str(idx' + 1) ['.] | -->
+               ch !['a...'z, 'A...'Z, '0...'9, '., '_] | -->
             spans += token::make_span(line_str(num_start..idx'), token::TOKEN_NUMBER, pal)
             --^
 
          // H. Identifiers, Keywords, Types, and Function Calls
-         c ['a'...'z', 'A'...'Z', '_'] || (c ['$'] && lang_id [lang::LANG_EDVA]) |
+         c ['a...'z, 'A...'Z, '_] || (c ['$] && lang_id [lang::LANG_EDVA]) |
             id_start = idx'
             0.. @
                idx' = idx' + 1
                idx' !< line_len | -->
                ch = line_str(idx')
-               ch !['a'...'z', 'A'...'Z', '0'...'9', '_'] | -->
+               ch !['a...'z, 'A...'Z, '0...'9, '_] | -->
             word = line_str(id_start..idx')
 
             word
@@ -346,11 +374,11 @@
                   0.. @
                      peek_idx' !< line_len | -->
                      pch = line_str(peek_idx')
-                     pch [' ', '\t']
+                     pch ['\s, '\t]
                         peek_idx' = peek_idx' + 1
                         --^
                      -->
-                  is_fn = peek_idx' < line_len && line_str(peek_idx') ['(']
+                  is_fn = peek_idx' < line_len && line_str(peek_idx') ['(]
                   is_fn
                      | spans += token::make_span(word, token::TOKEN_FUNCTION, pal)
                      | spans += token::make_span(word, token::TOKEN_TEXT, pal)

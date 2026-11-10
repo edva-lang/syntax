@@ -52,7 +52,7 @@ dependencies =
 ## Quick Start
 
 ```dva
-#use "color/palette"
+#use color/palette
 #use @syntax
 
 // 1. Detect language from filename

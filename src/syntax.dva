@@ -1,9 +1,9 @@
 // syntax/src/syntax.dva — Public library API for syntax highlighting
 
-#use "color/palette"
-#use "token"
-#use "lang"
-#use "lex"
+#use color/palette
+#use ./token
+#use ./lang
+#use ./lex
 
 #public
    // --- Core Types ---

@@ -1,6 +1,6 @@
 // syntax/src/token.dva — Token definitions and span models
 
-#use "color/palette"
+#use color/palette
 
 #public
    // --- Token Classifications ---
